@@ -1,35 +1,70 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useRef } from "react";
+import { SketchPicker } from "react-color";
+import html2canvas from "html2canvas";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+const gridSize = 16;
+
+type PixelArtEditorProps = {};
+
+const PixelArtEditor: React.FC<PixelArtEditorProps> = () => {
+  const [color, setColor] = useState<string>("#000000");
+  const [pixels, setPixels] = useState<string[]>(
+    Array(gridSize * gridSize).fill("#ffffff")
+  );
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const handlePixelClick = (index: number) => {
+    const newPixels = [...pixels];
+    newPixels[index] = color;
+    setPixels(newPixels);
+  };
+
+  const downloadImage = () => {
+    if (gridRef.current) {
+      html2canvas(gridRef.current).then((canvas: HTMLCanvasElement) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "pixel-art.png";
+        link.click();
+      });
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="container text-center py-4">
+      <SketchPicker color={color} onChange={(c) => setColor(c.hex)} />
+      <div
+        ref={gridRef}
+        className="d-grid border mt-4 mx-auto"
+        style={{
+          gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+          width: "auto",
+          display: "grid",
+          gap: "0px",
+          border: "2px solid black",
+        }}
+      >
+        {pixels.map((pixelColor, index) => (
+          <div
+            key={index}
+            className="border"
+            style={{
+              width: "24px",
+              height: "24px",
+              backgroundColor: pixelColor,
+              cursor: "pointer",
+              border: "1px solid black",
+            }}
+            onClick={() => handlePixelClick(index)}
+          />
+        ))}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      <button className="btn btn-primary mt-4" onClick={downloadImage}>
+        ダウンロード
+      </button>
+    </div>
+  );
+};
 
-export default App
+export default PixelArtEditor;
